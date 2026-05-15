@@ -5,16 +5,19 @@ namespace App\Services;
 use App\Models\Animal;
 use App\Services\EmailNotificationService;
 use App\Services\AnimalPdfGenerator;
+use App\Factories\IRazaFactory;
 
 class AnimalService 
 {
     protected $notificador;
     protected $pdfService;
+    protected $razaFactory;
 
-    public function __construct(EmailNotificationService $notificador, AnimalPdfGenerator $pdfService) 
+    public function __construct(EmailNotificationService $notificador, AnimalPdfGenerator $pdfService, IRazaFactory $razaFactory) 
     {
         $this->notificador = $notificador;
         $this->pdfService = $pdfService;
+        $this->razaFactory = $razaFactory;
     }
 
     public function registrar(array $datos): Animal 
@@ -26,6 +29,8 @@ class AnimalService
 
         // 2. Limpieza de datos (Solo enviamos lo que el modelo permite)
         // Esto evita errores si el arreglo trae campos extra como 'peso_inicial_kg'
+        $raza = $this->razaFactory->create($datos['raza']);
+        $datos['raza_id'] = $raza->id;
         $datosParaGuardar = array_intersect_key($datos, array_flip([
             'numero_arete', 
             'nombre', 
