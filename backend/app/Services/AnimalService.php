@@ -6,18 +6,21 @@ use App\Models\Animal;
 use App\Services\EmailNotificationService;
 use App\Services\AnimalPdfGenerator;
 use App\Factories\IRazaFactory;
+use App\Repositories\IAnimalRepository;
 
 class AnimalService 
 {
     protected $notificador;
     protected $pdfService;
     protected $razaFactory;
+    protected $animalRepository;
 
-    public function __construct(EmailNotificationService $notificador, AnimalPdfGenerator $pdfService, IRazaFactory $razaFactory) 
+    public function __construct(EmailNotificationService $notificador, AnimalPdfGenerator $pdfService, IRazaFactory $razaFactory, IAnimalRepository $animalRepository) 
     {
         $this->notificador = $notificador;
         $this->pdfService = $pdfService;
         $this->razaFactory = $razaFactory;
+        $this->animalRepository = $animalRepository;
     }
 
     public function registrar(array $datos): Animal 
@@ -40,7 +43,7 @@ class AnimalService
             'finca_id'
         ]));
 
-        $animal = Animal::create($datosParaGuardar);
+        $animal = $this->animalRepository->save($datosParaGuardar);
 
         // 3. Delegación de responsabilidades (SRP) [cite: 13, 82]
         // Usamos los datos originales ($datos) para las notificaciones por si se ocupan IDs externos
