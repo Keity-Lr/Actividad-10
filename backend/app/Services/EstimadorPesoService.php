@@ -8,24 +8,23 @@ use App\Models\Pesaje;
 
 class EstimadorPesoService 
 {
-    private $client;
+    private $algoritmo;
 
     // Inyectamos la abstracción, no la clase concreta (DIP)
-    public function __construct(IEstimadorPesoClient $client) 
+    public function __construct(IAlgoritmoEstimacion $algoritmo) 
     {
-        $this->client = $client;
+        $this->algoritmo = $algoritmo;
     }
 
     public function estimar(int $animalId, array $urlsFotos): Pesaje
     {
         $animal = Animal::findOrFail($animalId);
 
-        // Llamamos a la abstracción
-        $datos = $this->client->obtenerEstimacion(
-            $urlsFotos, 
-            $animal->raza->nombre, 
-            $animal->calcularEdadEnMeses()
-        );
+       $datos = $this->algoritmo->ejecutar(
+    $urlsFotos,
+    $animal->raza->nombre,
+    $animal->calcularEdadEnMeses()
+);
 
         return Pesaje::create([
             'animal_id' => $animalId,
