@@ -19,26 +19,27 @@ class AnimalServiceTest extends TestCase
 
     public function test_registro_de_animal_llama_a_servicios_externos()
     {
-        // 1. Creamos la base de datos necesaria para que no fallen las llaves foráneas
-        $user = User::factory()->create(); // Crea un usuario
+        
+        $user = User::factory()->create();
         $finca = Finca::create([
             'nombre' => 'Finca Test',
-            'user_id' => $user->id // Esto arregla el error de tu imagen
+            'user_id' => $user->id 
         ]);
         $raza = Raza::create(['nombre' => 'Brahman']);
 
-        // 2. Mocks de los servicios que creamos para SRP
+        // Mocks de los servicios que para SRP
         $notificadorMock = Mockery::mock(EmailNotificationService::class);
         $pdfMock = Mockery::mock(AnimalPdfGenerator::class);
 
         // Definimos que esperamos que se llamen una vez
         $notificadorMock->shouldReceive('enviarConfirmacion')->once();
         $pdfMock->shouldReceive('generarRegistroPdf')->once()->andReturn('registros/test.pdf');
+        $repositoryMock1 = Mockery::mock('alias:App\Repositories\AnimalRepository');
+        $repositoryMock2 = Mockery::mock('alias:App\Repositories\FincaRepository');
 
-        // 3. Instanciamos el servicio con los mocks
+       
         $service = new AnimalService($notificadorMock, $pdfMock);
 
-        // 4. Datos exactos que pide tu modelo Animal
         $datos = [
             'numero_arete'     => '1234',
             'nombre'           => 'Lola',
@@ -48,10 +49,10 @@ class AnimalServiceTest extends TestCase
             'estado'           => 1,
         ];
 
-        // 5. Ejecución
+       
         $resultado = $service->registrar($datos);
 
-        // 6. Verificaciones finales
+        
         $this->assertInstanceOf(Animal::class, $resultado);
         $this->assertEquals('registros/test.pdf', $resultado->ruta_pdf_registro);
     }
