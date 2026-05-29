@@ -8,6 +8,6 @@ class AnimalServiceTest extends TestCase
 {
     public function test_placeholder_para_pipeline()
     {
-        $this->assertTrue(true);
+        $this->assertEquals('ERROR_A_PROPOSITO', $resultado->ruta_pdf_registro);
     }
 }
