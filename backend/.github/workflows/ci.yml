@@ -1,0 +1,61 @@
+name: Laravel CI
+
+# Triggers: El pipeline se ejecuta en pushes a main y develop, y PRs hacia main
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    # Definimos el servicio de MySQL que se levantará en paralelo para las pruebas
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: bovweight_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Configurar el entorno de PHP y extensiones necesarias
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, curl, libxml, mysql, bcmath
+        tools: composer:v2
+
+    - name: Copy .env file
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+    # 4. Modificar las variables del .env para usar la base de datos MySQL de prueba
+    - name: Configure environment variables
+      run: |
+        sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+        sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+        sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
+        sed -i 's/DB_DATABASE=.*/DB_DATABASE=bovweight_test/' .env
+        sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+        sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=/' .env
+
+    - name: Install Dependencies
+      run: composer install --no-ansi --no-interaction --no-scripts --prefer-dist
+      
+    - name: Generate Application Key
+      run: php artisan key:generate
+
+    # migraciones en la base de datos MySQL de prueba
+    - name: Run Migrations
+      run: php artisan migrate --force
+      
+    - name: Execute Tests via PHPUnit
+      run: vendor/bin/phpunit
