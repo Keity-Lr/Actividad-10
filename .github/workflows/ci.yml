@@ -10,6 +10,7 @@ on:
 jobs:
   laravel-tests:
     runs-on: ubuntu-latest
+    
     defaults:
       run:
         working-directory: backend
@@ -23,24 +24,25 @@ jobs:
           MYSQL_DATABASE: bovweight_test
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # Configurar el entorno de PHP y extensiones necesarias
+    # Configurar el entorno de PHP 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
         php-version: '8.4'
         extensions: mbstring, dom, curl, libxml, mysql, bcmath
         tools: composer:v2
-
+        
     - name: Copy .env file
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
-    # 4. Modificar las variables del .env para usar la base de datos MySQL de prueba
+    # Modificar las variables del .env para usar la base de datos MySQL de prueba
     - name: Configure environment variables
       run: |
         sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
@@ -52,13 +54,20 @@ jobs:
 
     - name: Install Dependencies
       run: composer install --no-ansi --no-interaction --no-scripts --prefer-dist
-      
+
     - name: Generate Application Key
       run: php artisan key:generate
 
-    # migraciones en la base de datos MySQL de prueba
+    - name: Wait for MySQL to be ready
+      run: |
+        until nc -z -v -w30 127.0.0.1 3306; do
+          echo "Esperando a que la base de datos MySQL levante puerto..."
+          sleep 5
+        done
+
+    #Correr las migraciones en la base de datos MySQL de prueba
     - name: Run Migrations
       run: php artisan migrate --force
-      
+
     - name: Execute Tests via PHPUnit
       run: vendor/bin/phpunit
