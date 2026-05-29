@@ -10,6 +10,9 @@ on:
 jobs:
   laravel-tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     # Definimos el servicio de MySQL que se levantará en paralelo para las pruebas
     services:
