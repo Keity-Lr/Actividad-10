@@ -37,9 +37,8 @@ class AnimalServiceTest extends TestCase
         $repositoryMock1 = Mockery::mock('alias:App\Repositories\AnimalRepository');
         $repositoryMock2 = Mockery::mock('alias:App\Repositories\FincaRepository');
 
-       
-        $service = new AnimalService($notificadorMock, $pdfMock);
-
+       $service = new AnimalService($repositoryMock1, $repositoryMock2, $notificadorMock, $pdfMock);
+        
         $datos = [
             'numero_arete'     => '1234',
             'nombre'           => 'Lola',
